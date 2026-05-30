@@ -1,0 +1,10 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+/.import/
+
+# Godot-generated export and crash artifacts
+/export.cfg
+/export_presets.cfg
+*.translation
+mono_crash.*.json

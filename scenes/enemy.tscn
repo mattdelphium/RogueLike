@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_iwgds"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fmf0d"]
+size = Vector2(28, 28)
+
+[node name="Enemy" type="CharacterBody2D"]
+script = ExtResource("1_iwgds")
+collision_layer = 2
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_fmf0d")
+
+[node name="Body" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-14, -14, 14, -14, 14, 14, -14, 14)
+color = Color(1, 0.34902, 0.305882, 1)
