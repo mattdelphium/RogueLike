@@ -4,6 +4,12 @@ signal died
 
 @export var move_speed := 260.0
 @export var arena_size := Vector2(1152.0, 648.0)
+@export var attack_range_debug_radius := 0.0
+@export var show_attack_range_debug := true
+
+
+func _ready() -> void:
+	queue_redraw()
 
 
 func _physics_process(_delta: float) -> void:
@@ -20,14 +26,16 @@ func _physics_process(_delta: float) -> void:
 
 
 func _get_move_direction() -> Vector2:
-	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-
-	if direction != Vector2.ZERO:
-		return direction
-
-	var fallback_direction := Vector2(
-		int(Input.is_physical_key_pressed(KEY_D)) - int(Input.is_physical_key_pressed(KEY_A)),
-		int(Input.is_physical_key_pressed(KEY_S)) - int(Input.is_physical_key_pressed(KEY_W))
+	var keyboard_direction := Vector2(
+		int(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - int(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
+		int(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - int(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
 	)
 
-	return fallback_direction.normalized()
+	return keyboard_direction.normalized()
+
+
+func _draw() -> void:
+	if not show_attack_range_debug or attack_range_debug_radius <= 0.0:
+		return
+
+	draw_arc(Vector2.ZERO, attack_range_debug_radius, 0.0, TAU, 64, Color(1.0, 0.95, 0.45, 0.45), 2.0)

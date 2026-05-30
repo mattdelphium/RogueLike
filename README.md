@@ -5,7 +5,9 @@ This Godot 4 project contains the first playable arena prototype.
 ## Current loop
 
 - Move the blue square with WASD.
+- The player automatically fires yellow projectiles at the nearest enemy.
 - Red squares spawn around the arena and chase the player.
+- Projectiles destroy enemies on hit.
 - Touching an enemy ends the run.
 - Press R to restart.
 
@@ -14,6 +16,7 @@ This Godot 4 project contains the first playable arena prototype.
 - `scenes/main.tscn` contains the arena, enemy spawning, HUD, and restart loop.
 - `scenes/player.tscn` contains the player body, collision, and placeholder art.
 - `scenes/enemy.tscn` contains the chasing enemy.
+- `scenes/projectile.tscn` contains the basic ranged attack projectile.
 - `scripts/` contains one script per gameplay responsibility.
 
 ## Running it

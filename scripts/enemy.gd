@@ -16,3 +16,7 @@ func _physics_process(_delta: float) -> void:
 
 	velocity = global_position.direction_to(target.global_position) * move_speed
 	move_and_slide()
+
+
+func die() -> void:
+	queue_free()

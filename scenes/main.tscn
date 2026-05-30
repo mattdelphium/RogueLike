@@ -1,12 +1,14 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_x4kr3"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_tgghk"]
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="3_st7nn"]
+[ext_resource type="PackedScene" path="res://scenes/projectile.tscn" id="4_xt03k"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_x4kr3")
 enemy_scene = ExtResource("3_st7nn")
+projectile_scene = ExtResource("4_xt03k")
 
 [node name="Arena" type="Polygon2D" parent="."]
 position = Vector2(576, 324)
@@ -18,8 +20,14 @@ position = Vector2(576, 324)
 
 [node name="Enemies" type="Node2D" parent="."]
 
+[node name="Projectiles" type="Node2D" parent="."]
+
 [node name="SpawnTimer" type="Timer" parent="."]
 wait_time = 1.0
+autostart = true
+
+[node name="FireTimer" type="Timer" parent="."]
+wait_time = 0.6
 autostart = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
@@ -49,3 +57,4 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [connection signal="timeout" from="SpawnTimer" to="." method="_on_spawn_timer_timeout"]
+[connection signal="timeout" from="FireTimer" to="." method="_on_fire_timer_timeout"]
