@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_v4n2f"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_72n8p"]
+size = Vector2(20, 20)
+
+[node name="RunnerEnemy" type="CharacterBody2D"]
+script = ExtResource("1_v4n2f")
+collision_layer = 2
+collision_mask = 1
+move_speed = 250.0
+max_health = 1
+hit_feedback_duration = 0.06
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_72n8p")
+
+[node name="Body" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-10, -10, 10, -10, 10, 10, -10, 10)
+color = Color(1, 0.662745, 0.231373, 1)

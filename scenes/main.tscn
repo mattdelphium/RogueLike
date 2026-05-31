@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_x4kr3"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_tgghk"]
@@ -6,11 +6,13 @@
 [ext_resource type="PackedScene" path="res://scenes/projectile.tscn" id="4_xt03k"]
 [ext_resource type="PackedScene" path="res://scenes/impact.tscn" id="5_6m0md"]
 [ext_resource type="PackedScene" path="res://scenes/tank_enemy.tscn" id="6_x3jrq"]
+[ext_resource type="PackedScene" path="res://scenes/runner_enemy.tscn" id="7_x1p2q"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_x4kr3")
 enemy_scene = ExtResource("3_st7nn")
 tank_enemy_scene = ExtResource("6_x3jrq")
+runner_enemy_scene = ExtResource("7_x1p2q")
 projectile_scene = ExtResource("4_xt03k")
 impact_scene = ExtResource("5_6m0md")
 
@@ -67,6 +69,57 @@ offset_bottom = 212.0
 theme_override_font_sizes/font_size = 28
 modulate = Color(1, 0.960784, 0.721569, 0)
 text = "Spread Shot Unlocked"
+horizontal_alignment = 1
+
+[node name="UpgradePanel" type="Control" parent="CanvasLayer/HUD"]
+visible = false
+layout_mode = 0
+offset_left = 280.0
+offset_top = 120.0
+offset_right = 872.0
+offset_bottom = 420.0
+
+[node name="Backdrop" type="ColorRect" parent="CanvasLayer/HUD/UpgradePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.0588235, 0.0705882, 0.121569, 0.94)
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/HUD/UpgradePanel"]
+offset_left = 60.0
+offset_top = 28.0
+offset_right = 532.0
+offset_bottom = 72.0
+theme_override_font_sizes/font_size = 28
+text = "Choose an Upgrade"
+horizontal_alignment = 1
+
+[node name="Option1Label" type="Label" parent="CanvasLayer/HUD/UpgradePanel"]
+offset_left = 44.0
+offset_top = 96.0
+offset_right = 548.0
+offset_bottom = 186.0
+theme_override_font_sizes/font_size = 22
+text = "1. Swift Boots\n+40 move speed"
+autowrap_mode = 3
+
+[node name="Option2Label" type="Label" parent="CanvasLayer/HUD/UpgradePanel"]
+offset_left = 44.0
+offset_top = 188.0
+offset_right = 548.0
+offset_bottom = 278.0
+theme_override_font_sizes/font_size = 22
+text = "2. Quick Hands\nFaster attack rate"
+autowrap_mode = 3
+
+[node name="HintLabel" type="Label" parent="CanvasLayer/HUD/UpgradePanel"]
+offset_left = 112.0
+offset_top = 248.0
+offset_right = 484.0
+offset_bottom = 286.0
+theme_override_font_sizes/font_size = 16
+text = "Press 1 or 2 to choose"
 horizontal_alignment = 1
 
 [node name="GameOverLabel" type="Label" parent="CanvasLayer/HUD"]

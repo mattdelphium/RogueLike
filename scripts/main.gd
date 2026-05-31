@@ -1,6 +1,7 @@
 extends Node2D
 
 @export var enemy_scene: PackedScene
+@export var runner_enemy_scene: PackedScene
 @export var tank_enemy_scene: PackedScene
 @export var projectile_scene: PackedScene
 @export var impact_scene: PackedScene
@@ -18,6 +19,9 @@ extends Node2D
 @export var ricochet_unlock_time := 50.0
 @export var ricochet_bounces := 1
 @export var ricochet_search_radius := 260.0
+@export var upgrade_interval := 18.0
+@export var runner_spawn_start_time := 25.0
+@export var runner_spawn_chance := 0.22
 @export var tank_spawn_start_time := 15.0
 @export var tank_spawn_chance := 0.18
 @export var max_enemies := 20
@@ -28,11 +32,14 @@ extends Node2D
 @export var unlock_announcement_duration := 1.4
 
 var is_game_over := false
+var is_upgrade_selection_active := false
 var survival_time := 0.0
 var best_survival_time := 0.0
+var next_upgrade_time := 0.0
 var has_announced_spread_shot := false
 var has_announced_piercing_shot := false
 var has_announced_ricochet := false
+var current_upgrade_choices: Array = []
 var unlock_announcement_tween: Tween = null
 var weapon_label_tween: Tween = null
 var rng := RandomNumberGenerator.new()
@@ -45,11 +52,15 @@ var rng := RandomNumberGenerator.new()
 @onready var timer_label: Label = $CanvasLayer/HUD/TimerLabel
 @onready var weapon_label: Label = $CanvasLayer/HUD/WeaponLabel
 @onready var unlock_label: Label = $CanvasLayer/HUD/UnlockLabel
+@onready var upgrade_panel: Control = $CanvasLayer/HUD/UpgradePanel
+@onready var upgrade_option_1_label: Label = $CanvasLayer/HUD/UpgradePanel/Option1Label
+@onready var upgrade_option_2_label: Label = $CanvasLayer/HUD/UpgradePanel/Option2Label
 @onready var game_over_label: Label = $CanvasLayer/HUD/GameOverLabel
 
 
 func _ready() -> void:
 	rng.randomize()
+	next_upgrade_time = upgrade_interval
 	spawn_timer.wait_time = spawn_interval
 	fire_timer.wait_time = attack_interval
 	player.arena_size = arena_size
@@ -60,6 +71,7 @@ func _ready() -> void:
 	game_over_label.visible = false
 	unlock_label.visible = false
 	unlock_label.modulate.a = 0.0
+	upgrade_panel.visible = false
 	_update_weapon_label()
 	_update_timer_label()
 
@@ -70,8 +82,16 @@ func _process(delta: float) -> void:
 			get_tree().reload_current_scene()
 		return
 
+	if is_upgrade_selection_active:
+		_handle_upgrade_input()
+		return
+
 	survival_time += delta
 	spawn_timer.wait_time = _get_current_spawn_interval()
+	if survival_time >= next_upgrade_time:
+		next_upgrade_time += upgrade_interval
+		_open_upgrade_selection()
+		return
 	if not has_announced_spread_shot and _is_spread_shot_unlocked():
 		has_announced_spread_shot = true
 		_update_weapon_label()
@@ -256,7 +276,11 @@ func _select_enemy_scene() -> PackedScene:
 	if enemy_scene == null:
 		return null
 
-	if tank_enemy_scene != null and survival_time >= tank_spawn_start_time and rng.randf() < tank_spawn_chance:
+	var roll := rng.randf()
+	if runner_enemy_scene != null and survival_time >= runner_spawn_start_time and roll < runner_spawn_chance:
+		return runner_enemy_scene
+
+	if tank_enemy_scene != null and survival_time >= tank_spawn_start_time and roll < runner_spawn_chance + tank_spawn_chance:
 		return tank_enemy_scene
 
 	return enemy_scene
@@ -289,3 +313,93 @@ func _get_projectile_bounce_capacity() -> int:
 		return maxi(ricochet_bounces, 0)
 
 	return 0
+
+
+func _open_upgrade_selection() -> void:
+	is_upgrade_selection_active = true
+	current_upgrade_choices = _build_upgrade_choices()
+	if current_upgrade_choices.size() < 2:
+		is_upgrade_selection_active = false
+		return
+
+	spawn_timer.stop()
+	fire_timer.stop()
+	player.set_physics_process(false)
+	for enemy in enemies.get_children():
+		enemy.set_physics_process(false)
+	for projectile in projectiles.get_children():
+		projectile.set_physics_process(false)
+
+	upgrade_option_1_label.text = _format_upgrade_option(1, current_upgrade_choices[0])
+	upgrade_option_2_label.text = _format_upgrade_option(2, current_upgrade_choices[1])
+	upgrade_panel.visible = true
+
+
+func _close_upgrade_selection() -> void:
+	is_upgrade_selection_active = false
+	upgrade_panel.visible = false
+	current_upgrade_choices.clear()
+	spawn_timer.start(spawn_timer.wait_time)
+	fire_timer.wait_time = attack_interval
+	fire_timer.start(fire_timer.wait_time)
+	player.set_physics_process(true)
+	for enemy in enemies.get_children():
+		enemy.set_physics_process(true)
+	for projectile in projectiles.get_children():
+		projectile.set_physics_process(true)
+
+
+func _handle_upgrade_input() -> void:
+	if Input.is_physical_key_pressed(KEY_1) or Input.is_physical_key_pressed(KEY_KP_1):
+		_apply_upgrade_choice(0)
+	elif Input.is_physical_key_pressed(KEY_2) or Input.is_physical_key_pressed(KEY_KP_2):
+		_apply_upgrade_choice(1)
+
+
+func _apply_upgrade_choice(choice_index: int) -> void:
+	if choice_index < 0 or choice_index >= current_upgrade_choices.size():
+		return
+
+	var choice: Dictionary = current_upgrade_choices[choice_index]
+	match String(choice["id"]):
+		"move_speed":
+			player.move_speed += 40.0
+		"attack_speed":
+			attack_interval = max(0.18, attack_interval - 0.05)
+		"projectile_speed":
+			projectile_speed += 70.0
+		"projectile_range":
+			projectile_range += 90.0
+		"attack_range":
+			attack_range += 40.0
+			player.attack_range_debug_radius = attack_range
+			player.queue_redraw()
+
+	_update_weapon_label()
+	_announce_unlock(String(choice["title"]))
+	_close_upgrade_selection()
+
+
+func _build_upgrade_choices() -> Array:
+	var pool: Array = _get_upgrade_pool()
+	var choices: Array = []
+	while choices.size() < 2 and not pool.is_empty():
+		var choice_index: int = rng.randi_range(0, pool.size() - 1)
+		choices.append(pool[choice_index])
+		pool.remove_at(choice_index)
+
+	return choices
+
+
+func _get_upgrade_pool() -> Array:
+	var upgrades: Array = []
+	upgrades.append({"id": "move_speed", "title": "Swift Boots", "description": "+40 move speed"})
+	upgrades.append({"id": "attack_speed", "title": "Quick Hands", "description": "Faster attack rate"})
+	upgrades.append({"id": "projectile_speed", "title": "Sharpened Rounds", "description": "+70 projectile speed"})
+	upgrades.append({"id": "projectile_range", "title": "Long Barrel", "description": "+90 projectile range"})
+	upgrades.append({"id": "attack_range", "title": "Targeting Lens", "description": "+40 attack range"})
+	return upgrades
+
+
+func _format_upgrade_option(option_number: int, choice: Dictionary) -> String:
+	return "%d. %s\n%s" % [option_number, String(choice["title"]), String(choice["description"])]
