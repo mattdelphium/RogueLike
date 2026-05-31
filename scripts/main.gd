@@ -7,14 +7,17 @@ extends Node2D
 @export var spawn_interval := 1.0
 @export var min_spawn_interval := 0.35
 @export var spawn_interval_decay := 0.02
-@export var attack_interval := 0.6
-@export var attack_range := 240.0
+@export var attack_interval := 0.4
+@export var attack_range := 340.0
 @export var base_projectile_count := 1
 @export var spread_projectile_count := 2
 @export var projectile_spread_degrees := 14.0
 @export var spread_shot_unlock_time := 20.0
 @export var piercing_unlock_time := 35.0
 @export var piercing_projectile_hits := 2
+@export var ricochet_unlock_time := 50.0
+@export var ricochet_bounces := 1
+@export var ricochet_search_radius := 260.0
 @export var tank_spawn_start_time := 15.0
 @export var tank_spawn_chance := 0.18
 @export var max_enemies := 20
@@ -22,12 +25,16 @@ extends Node2D
 @export var projectile_speed := 320.0
 @export var projectile_range := 620.0
 @export var show_attack_range_debug := true
+@export var unlock_announcement_duration := 1.4
 
 var is_game_over := false
 var survival_time := 0.0
 var best_survival_time := 0.0
 var has_announced_spread_shot := false
 var has_announced_piercing_shot := false
+var has_announced_ricochet := false
+var unlock_announcement_tween: Tween = null
+var weapon_label_tween: Tween = null
 var rng := RandomNumberGenerator.new()
 
 @onready var player: CharacterBody2D = $Player
@@ -37,6 +44,7 @@ var rng := RandomNumberGenerator.new()
 @onready var fire_timer: Timer = $FireTimer
 @onready var timer_label: Label = $CanvasLayer/HUD/TimerLabel
 @onready var weapon_label: Label = $CanvasLayer/HUD/WeaponLabel
+@onready var unlock_label: Label = $CanvasLayer/HUD/UnlockLabel
 @onready var game_over_label: Label = $CanvasLayer/HUD/GameOverLabel
 
 
@@ -50,6 +58,8 @@ func _ready() -> void:
 	player.queue_redraw()
 	player.died.connect(_on_player_died)
 	game_over_label.visible = false
+	unlock_label.visible = false
+	unlock_label.modulate.a = 0.0
 	_update_weapon_label()
 	_update_timer_label()
 
@@ -65,9 +75,15 @@ func _process(delta: float) -> void:
 	if not has_announced_spread_shot and _is_spread_shot_unlocked():
 		has_announced_spread_shot = true
 		_update_weapon_label()
+		_announce_unlock("Spread Shot Unlocked")
 	if not has_announced_piercing_shot and _is_piercing_unlocked():
 		has_announced_piercing_shot = true
 		_update_weapon_label()
+		_announce_unlock("Piercing Unlocked")
+	if not has_announced_ricochet and _is_ricochet_unlocked():
+		has_announced_ricochet = true
+		_update_weapon_label()
+		_announce_unlock("Ricochet Unlocked")
 	_update_timer_label()
 
 
@@ -144,6 +160,18 @@ func _update_timer_label() -> void:
 
 
 func _update_weapon_label() -> void:
+	if _is_ricochet_unlocked() and _is_piercing_unlocked() and _is_spread_shot_unlocked():
+		weapon_label.text = "Weapon: Ricochet Spread"
+		return
+
+	if _is_ricochet_unlocked() and _is_piercing_unlocked():
+		weapon_label.text = "Weapon: Ricochet Pierce"
+		return
+
+	if _is_ricochet_unlocked():
+		weapon_label.text = "Weapon: Ricochet Shot"
+		return
+
 	if _is_piercing_unlocked() and _is_spread_shot_unlocked():
 		weapon_label.text = "Weapon: Piercing Spread"
 		return
@@ -157,6 +185,35 @@ func _update_weapon_label() -> void:
 		return
 
 	weapon_label.text = "Weapon: Single Shot"
+
+
+func _announce_unlock(message: String) -> void:
+	unlock_label.text = message
+	unlock_label.visible = true
+	unlock_label.scale = Vector2.ONE * 0.92
+	unlock_label.modulate = Color(1.0, 0.96, 0.72, 0.0)
+
+	if unlock_announcement_tween != null:
+		unlock_announcement_tween.kill()
+	if weapon_label_tween != null:
+		weapon_label_tween.kill()
+
+	unlock_announcement_tween = create_tween()
+	unlock_announcement_tween.set_parallel(true)
+	unlock_announcement_tween.tween_property(unlock_label, "modulate:a", 1.0, 0.15)
+	unlock_announcement_tween.tween_property(unlock_label, "scale", Vector2.ONE, 0.15)
+	unlock_announcement_tween.chain().tween_interval(max(unlock_announcement_duration - 0.35, 0.0))
+	unlock_announcement_tween.chain().tween_property(unlock_label, "modulate:a", 0.0, 0.2)
+	unlock_announcement_tween.finished.connect(_on_unlock_announcement_finished, CONNECT_ONE_SHOT)
+
+	weapon_label.scale = Vector2.ONE
+	weapon_label_tween = create_tween()
+	weapon_label_tween.tween_property(weapon_label, "scale", Vector2(1.08, 1.08), 0.12)
+	weapon_label_tween.tween_property(weapon_label, "scale", Vector2.ONE, 0.12)
+
+
+func _on_unlock_announcement_finished() -> void:
+	unlock_label.visible = false
 
 
 func _get_nearest_enemy() -> Node2D:
@@ -191,6 +248,10 @@ func _is_piercing_unlocked() -> bool:
 	return survival_time >= piercing_unlock_time
 
 
+func _is_ricochet_unlocked() -> bool:
+	return survival_time >= ricochet_unlock_time
+
+
 func _select_enemy_scene() -> PackedScene:
 	if enemy_scene == null:
 		return null
@@ -208,6 +269,9 @@ func _spawn_projectile(direction: Vector2) -> void:
 	projectile.move_speed = projectile_speed
 	projectile.max_distance = projectile_range
 	projectile.remaining_hits = _get_projectile_hit_capacity()
+	projectile.remaining_bounces = _get_projectile_bounce_capacity()
+	projectile.ricochet_search_radius = ricochet_search_radius
+	projectile.enemy_parent = enemies
 	projectile.impact_scene = impact_scene
 	projectile.impact_parent = projectiles
 	projectiles.add_child(projectile)
@@ -218,3 +282,10 @@ func _get_projectile_hit_capacity() -> int:
 		return maxi(piercing_projectile_hits, 1)
 
 	return 1
+
+
+func _get_projectile_bounce_capacity() -> int:
+	if _is_ricochet_unlocked():
+		return maxi(ricochet_bounces, 0)
+
+	return 0

@@ -58,6 +58,17 @@ offset_bottom = 82.0
 theme_override_font_sizes/font_size = 18
 text = "Weapon: Single Shot"
 
+[node name="UnlockLabel" type="Label" parent="CanvasLayer/HUD"]
+visible = false
+offset_left = 334.0
+offset_top = 150.0
+offset_right = 818.0
+offset_bottom = 212.0
+theme_override_font_sizes/font_size = 28
+modulate = Color(1, 0.960784, 0.721569, 0)
+text = "Spread Shot Unlocked"
+horizontal_alignment = 1
+
 [node name="GameOverLabel" type="Label" parent="CanvasLayer/HUD"]
 offset_left = 322.0
 offset_top = 260.0
