@@ -3,6 +3,8 @@ extends Area2D
 var direction := Vector2.ZERO
 var move_speed := 520.0
 var max_distance := 420.0
+var impact_scene: PackedScene
+var impact_parent: Node
 
 var distance_traveled := 0.0
 
@@ -28,4 +30,16 @@ func _on_body_entered(body: Node2D) -> void:
 	if body.has_method("die"):
 		body.die()
 
+	_spawn_impact()
+
 	queue_free()
+
+
+func _spawn_impact() -> void:
+	if impact_scene == null or impact_parent == null:
+		return
+
+	var impact := impact_scene.instantiate()
+	impact.global_position = global_position
+	impact.rotation = rotation
+	impact_parent.add_child(impact)

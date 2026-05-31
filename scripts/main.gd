@@ -2,6 +2,7 @@ extends Node2D
 
 @export var enemy_scene: PackedScene
 @export var projectile_scene: PackedScene
+@export var impact_scene: PackedScene
 @export var spawn_interval := 1.0
 @export var attack_interval := 0.6
 @export var attack_range := 240.0
@@ -13,6 +14,7 @@ extends Node2D
 
 var is_game_over := false
 var survival_time := 0.0
+var best_survival_time := 0.0
 var rng := RandomNumberGenerator.new()
 
 @onready var player: CharacterBody2D = $Player
@@ -73,6 +75,8 @@ func _on_fire_timer_timeout() -> void:
 	projectile.direction = player.global_position.direction_to(target_enemy.global_position)
 	projectile.move_speed = projectile_speed
 	projectile.max_distance = projectile_range
+	projectile.impact_scene = impact_scene
+	projectile.impact_parent = projectiles
 	projectiles.add_child(projectile)
 
 
@@ -81,6 +85,7 @@ func _on_player_died() -> void:
 		return
 
 	is_game_over = true
+	best_survival_time = max(best_survival_time, survival_time)
 	spawn_timer.stop()
 	fire_timer.stop()
 	for enemy in enemies.get_children():
@@ -88,6 +93,7 @@ func _on_player_died() -> void:
 	for projectile in projectiles.get_children():
 		projectile.set_physics_process(false)
 	player.set_physics_process(false)
+	game_over_label.text = "Game Over\nTime: %.1f\nBest: %.1f\nPress R to restart" % [survival_time, best_survival_time]
 	game_over_label.visible = true
 
 
