@@ -1,14 +1,16 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_x4kr3"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_tgghk"]
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="3_st7nn"]
 [ext_resource type="PackedScene" path="res://scenes/projectile.tscn" id="4_xt03k"]
 [ext_resource type="PackedScene" path="res://scenes/impact.tscn" id="5_6m0md"]
+[ext_resource type="PackedScene" path="res://scenes/tank_enemy.tscn" id="6_x3jrq"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_x4kr3")
 enemy_scene = ExtResource("3_st7nn")
+tank_enemy_scene = ExtResource("6_x3jrq")
 projectile_scene = ExtResource("4_xt03k")
 impact_scene = ExtResource("5_6m0md")
 

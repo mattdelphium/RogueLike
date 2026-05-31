@@ -27,7 +27,9 @@ func _on_body_entered(body: Node2D) -> void:
 	if not body.is_in_group("enemies"):
 		return
 
-	if body.has_method("die"):
+	if body.has_method("take_hit"):
+		body.take_hit()
+	elif body.has_method("die"):
 		body.die()
 
 	_spawn_impact()

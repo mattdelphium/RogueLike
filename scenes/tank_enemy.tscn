@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_2uh4s"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_90m2b"]
+size = Vector2(40, 40)
+
+[node name="TankEnemy" type="CharacterBody2D"]
+script = ExtResource("1_2uh4s")
+collision_layer = 2
+collision_mask = 1
+move_speed = 70.0
+max_health = 4
+hit_feedback_duration = 0.11
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_90m2b")
+
+[node name="Body" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+color = Color(0.717647, 0.25098, 0.203922, 1)

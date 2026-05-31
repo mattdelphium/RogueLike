@@ -1,17 +1,21 @@
 extends CharacterBody2D
 
 @export var move_speed := 140.0
+@export var max_health := 1
 @export var hit_feedback_duration := 0.08
 
 var target: Node2D
 var is_dying := false
+var current_health := 0
 
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 @onready var body: Polygon2D = $Body
+@onready var base_color: Color = body.color
 
 
 func _ready() -> void:
 	add_to_group("enemies")
+	current_health = max_health
 
 
 func _physics_process(_delta: float) -> void:
@@ -21,6 +25,18 @@ func _physics_process(_delta: float) -> void:
 
 	velocity = global_position.direction_to(target.global_position) * move_speed
 	move_and_slide()
+
+
+func take_hit(damage := 1) -> void:
+	if is_dying:
+		return
+
+	current_health = max(current_health - damage, 0)
+	if current_health <= 0:
+		die()
+		return
+
+	_show_hit_flash()
 
 
 func die() -> void:
@@ -40,3 +56,9 @@ func die() -> void:
 	tween.chain().tween_property(body, "scale", Vector2(0.0, 0.0), hit_feedback_duration)
 	await tween.finished
 	queue_free()
+
+
+func _show_hit_flash() -> void:
+	var tween := create_tween()
+	tween.tween_property(body, "color", Color(1.0, 0.96, 0.72, 1.0), hit_feedback_duration * 0.5)
+	tween.tween_property(body, "color", base_color, hit_feedback_duration * 0.5)

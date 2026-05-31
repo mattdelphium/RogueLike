@@ -1,11 +1,15 @@
 extends Node2D
 
 @export var enemy_scene: PackedScene
+@export var tank_enemy_scene: PackedScene
 @export var projectile_scene: PackedScene
 @export var impact_scene: PackedScene
 @export var spawn_interval := 1.0
+@export var min_spawn_interval := 0.35
+@export var spawn_interval_decay := 0.02
 @export var attack_interval := 0.6
 @export var attack_range := 240.0
+@export var tank_spawn_chance := 0.18
 @export var max_enemies := 20
 @export var arena_size := Vector2(1152.0, 648.0)
 @export var projectile_speed := 320.0
@@ -46,6 +50,7 @@ func _process(delta: float) -> void:
 		return
 
 	survival_time += delta
+	spawn_timer.wait_time = _get_current_spawn_interval()
 	_update_timer_label()
 
 
@@ -53,10 +58,11 @@ func _on_spawn_timer_timeout() -> void:
 	if is_game_over:
 		return
 
-	if enemy_scene == null or enemies.get_child_count() >= max_enemies:
+	var selected_enemy_scene := _select_enemy_scene()
+	if selected_enemy_scene == null or enemies.get_child_count() >= max_enemies:
 		return
 
-	var enemy := enemy_scene.instantiate()
+	var enemy := selected_enemy_scene.instantiate()
 	enemy.target = player
 	enemy.position = _random_spawn_position()
 	enemies.add_child(enemy)
@@ -127,3 +133,17 @@ func _get_nearest_enemy() -> Node2D:
 			nearest_enemy = enemy
 
 	return nearest_enemy
+
+
+func _get_current_spawn_interval() -> float:
+	return max(min_spawn_interval, spawn_interval - survival_time * spawn_interval_decay)
+
+
+func _select_enemy_scene() -> PackedScene:
+	if enemy_scene == null:
+		return null
+
+	if tank_enemy_scene != null and rng.randf() < tank_spawn_chance:
+		return tank_enemy_scene
+
+	return enemy_scene
