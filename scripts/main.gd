@@ -5,10 +5,10 @@ extends Node2D
 @export var spawn_interval := 1.0
 @export var attack_interval := 0.6
 @export var attack_range := 240.0
-@export var max_enemies := 12
+@export var max_enemies := 20
 @export var arena_size := Vector2(1152.0, 648.0)
-@export var projectile_speed := 520.0
-@export var projectile_range := 420.0
+@export var projectile_speed := 320.0
+@export var projectile_range := 620.0
 @export var show_attack_range_debug := true
 
 var is_game_over := false
